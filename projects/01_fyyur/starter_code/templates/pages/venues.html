@@ -3,17 +3,44 @@
 {% block content %}
 {% for area in areas %}
 <h3>{{ area.city }}, {{ area.state }}</h3>
-	<ul class="items">
-		{% for venue in area.venues %}
-		<li>
-			<a href="/venues/{{ venue.id }}">
-				<i class="fas fa-music"></i>
-				<div class="item">
-					<h5>{{ venue.name }}</h5>
-				</div>
-			</a>
-		</li>
-		{% endfor %}
-	</ul>
+<ul class="items">
+	{% for venue in area.venues %}
+	<li>
+		<a href="/venues/{{ venue.id }}">
+			<i class="fas fa-music"></i>
+			<div class="item">
+				<h5>{{ venue.name }}</h5>
+			</div>
+		</a>
+		<button type="submit" class='delete_venue' data-venue_id={{venue.id}}>X</button>
+	</li>
+	{% endfor %}
+</ul>
 {% endfor %}
+
+
+<script>
+	delete_buttons = document.querySelectorAll('.delete_venue');
+	for (var i = 0; i < delete_buttons.length; i++) {
+		delete_button = delete_buttons[i];
+
+		delete_button.onclick = function (e) {
+			id = e.target.dataset['venue_id'];
+			fetch('/venues/' + id, {
+				method: 'DELETE',
+				headers: {
+					'Content-Type': 'application/json'
+				}
+			}).then(function (response) {
+				return response.json();
+			}).then(function (res) {
+				if(res.success){
+					window.location.href = '/';
+				}
+			}).catch(function (err) {
+				console.error(err)
+			})
+		}
+	}
+</script>
 {% endblock %}
