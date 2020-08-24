@@ -5,6 +5,7 @@
 import json
 import dateutil.parser
 import babel
+import datetime
 from flask import Flask, render_template, request, Response, flash, redirect, url_for,jsonify
 from flask_moment import Moment
 from flask_sqlalchemy import SQLAlchemy
@@ -180,7 +181,34 @@ def show_venue(venue_id):
   # shows the venue page with the given venue_id
   # TODO: replace with real venue data from the venues table, using venue_id
   try:
+    past_shows_array = []
+    upcoming_shows_array = []
     venue_data = db.session.query(Venue).get(venue_id)
+    past_shows_query = db.session.query(Show,Venue,Artist).join(Venue,Artist).filter(Venue.id==venue_id,Show.show_time<=datetime.now()).all() 
+    upcoming_shows_query = db.session.query(Show,Venue,Artist).join(Venue,Artist).filter(Venue.id==venue_id,Show.show_time>=datetime.now()).all()
+
+    for p in past_shows_query:
+      print(p)
+      show    = p[0]
+      venue   = p[1]
+      artist  = p[2]
+      past_shows_array.append({
+        "artist_id": artist.id,
+        "artist_name": artist.name,
+        "artist_image_link": artist.image_link,
+        "start_time": datetime.strftime(show.show_time,'%Y-%m-%d %H:%M:%S')
+      })
+    for u in upcoming_shows_query:
+      show    = u[0]
+      venue   = u[1]
+      artist  = u[2]
+      upcoming_shows_array.append({
+        "artist_id": artist.id,
+        "artist_name": artist.name,
+        "artist_image_link": artist.image_link,
+        "start_time": datetime.strftime(show.show_time,'%Y-%m-%d %H:%M:%S')
+      })
+
     venue={
       "id": venue_data.id,
       "name":venue_data.name,
@@ -194,19 +222,16 @@ def show_venue(venue_id):
       "seeking_talent": True,
       "seeking_description": "We are on the lookout for a local artist to play every two weeks. Please call us.",
       "image_link": venue_data.image_link,
-      "past_shows": [{
-        "artist_id": 4,
-        "artist_name": "Guns N Petals",
-        "artist_image_link": "https://images.unsplash.com/photo-1549213783-8284d0336c4f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80",
-        "start_time": "2019-05-21T21:30:00.000Z"
-      }],
-      "upcoming_shows": [],
-      "past_shows_count": 1,
-      "upcoming_shows_count": 0,
+      "past_shows": past_shows_array,
+      "upcoming_shows": upcoming_shows_array,
+      "past_shows_count": len(past_shows_array),
+      "upcoming_shows_count": len(upcoming_shows_array),
     }
+    print(venue)
     data = list(filter(lambda d: d['id'] == venue_id, [venue]))[0]
-  except:
+  except Exception as e:
     db.session.rollback()
+    print(e)
   finally:
     return render_template('pages/show_venue.html', venue=data)
 
@@ -322,7 +347,32 @@ def show_artist(artist_id):
   # shows the venue page with the given venue_id
   # TODO: replace with real venue data from the venues table, using venue_id
   try:
+    past_shows_array = []
+    upcoming_shows_array = []
     artist_data = db.session.query(Artist).get(artist_id)
+    past_shows_query = db.session.query(Show,Venue,Artist).join(Venue,Artist).filter(Artist.id==artist_id,Show.show_time<=datetime.now()).all() 
+    upcoming_shows_query = db.session.query(Show,Venue,Artist).join(Venue,Artist).filter(Artist.id==artist_id,Show.show_time>=datetime.now()).all()
+
+    for p in past_shows_query:
+      show    = p[0]
+      venue   = p[1]
+      artist  = p[2]
+      past_shows_array.append({
+        "venue_id": venue.id,
+        "venue_name": venue.name,
+        "venue_image_link": venue.image_link,
+        "start_time": datetime.strftime(show.show_time,'%Y-%m-%d %H:%M:%S')
+      })
+    for u in upcoming_shows_query:
+      show    = u[0]
+      venue   = u[1]
+      artist  = u[2]
+      upcoming_shows_array.append({
+        "venue_id": venue.id,
+        "venue_name": venue.name,
+        "venue_image_link": venue.image_link,
+        "start_time": datetime.strftime(show.show_time,'%Y-%m-%d %H:%M:%S')
+      })
     artist={
       "id": artist_data.id,
       "name":artist_data.name,
@@ -335,18 +385,13 @@ def show_artist(artist_id):
       "seeking_talent": True,
       "seeking_description": "We are on the lookout for a local artist to play every two weeks. Please call us.",
       "image_link": artist_data.image_link,
-      "past_shows": [{
-        "venue_id": 1,
-        "venue_name": "The Musical Hop",
-        "venue_image_link": "https://images.unsplash.com/photo-1543900694-133f37abaaa5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=400&q=60",
-        "start_time": "2019-05-21T21:30:00.000Z"
-      }],
-      "upcoming_shows": [],
-      "past_shows_count": 1,
-      "upcoming_shows_count": 0,
+      "past_shows": past_shows_array,
+      "upcoming_shows":upcoming_shows_array,
+      "past_shows_count": len(past_shows_array),
+      "upcoming_shows_count": len(upcoming_shows_array),
     }
     data = list(filter(lambda d: d['id'] == artist_id, [artist]))[0]
-  except:
+  except Exception as e:
     db.session.rollback()
   finally:
     db.session.close()
