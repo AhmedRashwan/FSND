@@ -259,11 +259,13 @@ def create_venue_submission():
                       address=request.form.get('address'),
                       phone=request.form.get('phone'),
                       genres=request.form.get('genres'),
-                      facebook_link=request.form.get('facebook_link')
+                      facebook_link=request.form.get('facebook_link'),
+                      image_link=request.form.get('image_link')
                       )
     db.session.add(new_venue)
     db.session.commit()
-  except:
+  except Exception as e:
+    print(e)
     db.session.rollback()
     error = True
   finally:
@@ -511,7 +513,8 @@ def create_artist_submission():
                       state=request.form.get('state'),
                       phone=request.form.get('phone'),
                       genres=request.form.get('genres'),
-                      facebook_link=request.form.get('facebook_link')
+                      facebook_link=request.form.get('facebook_link'),
+                      image_link=request.form.get('image_link')
                       )
     db.session.add(new_artist)
     db.session.commit()
@@ -557,7 +560,7 @@ def shows():
         "artist_id": artist.id,
         "artist_name": artist.name,
         "artist_image_link": artist.image_link,
-        "start_time": "2035-04-08T20:00:00.000Z"
+        "start_time": datetime.strftime(show.show_time,'%Y-%m-%d %H:%M:%S')
       })
   except Exception as e:
     db.session.rollback()
