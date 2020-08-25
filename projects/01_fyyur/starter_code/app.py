@@ -125,7 +125,8 @@ def venues():
     for elem in venue_data:
       venues= []
       # filter venues in depending city and state
-      for u in  db.session.query(Venue).filter(and_(Venue.city==elem.city,Venue.state==elem.state)).all():
+      query = db.session.query(Venue).filter(and_(Venue.city==elem.city,Venue.state==elem.state)).all()
+      for u in query:
         venues.append({
           'id': u.id,
           'name': u.name,
@@ -149,7 +150,8 @@ def search_venues():
     error = False
     venue_count = db.session.query(Venue).filter(Venue.name.ilike('%'+request.form.get('search_term', '')+'%')).count()
     data=[]
-    for u in db.session.query(Venue).filter(Venue.name.ilike('%'+request.form.get('search_term', '')+'%')).all():
+    query = db.session.query(Venue).filter(Venue.name.ilike('%'+request.form.get('search_term', '')+'%')).all()
+    for u in query:
         data.append({
           "id": u.id,
           "name": u.name,
@@ -311,7 +313,8 @@ def delete_venue(venue_id):
 def artists():
   try:
     data = []
-    for artist in db.session.query(Artist).all():
+    query = db.session.query(Artist).all()
+    for artist in query:
       data.append({
         'id': artist.id,
         'name': artist.name
@@ -328,7 +331,8 @@ def search_artists():
     error = False
     data = []
     result_count = db.session.query(Artist).filter(Artist.name.ilike('%'+request.form.get('search_term', '')+'%')).count()
-    for artist in db.session.query(Artist).filter(Artist.name.ilike('%'+request.form.get('search_term', '')+'%')).all():
+    query = db.session.query(Artist).filter(Artist.name.ilike('%'+request.form.get('search_term', '')+'%')).all()
+    for artist in query:
       data.append({
           "id": artist.id,
           "name": artist.name,
@@ -544,7 +548,6 @@ def shows():
   try:
     data = []
     query = db.session.query(Show,Artist,Venue).join(Artist,Venue).all()
-    print(query)
     for result in query:
       show   = result[0]
       artist = result[1]
