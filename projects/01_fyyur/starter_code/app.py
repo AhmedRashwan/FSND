@@ -188,7 +188,6 @@ def show_venue(venue_id):
     upcoming_shows_query = db.session.query(Show,Venue,Artist).join(Venue,Artist).filter(Venue.id==venue_id,Show.show_time>=datetime.now()).all()
 
     for p in past_shows_query:
-      print(p)
       show    = p[0]
       venue   = p[1]
       artist  = p[2]
@@ -212,7 +211,7 @@ def show_venue(venue_id):
     venue={
       "id": venue_data.id,
       "name":venue_data.name,
-      "genres": venue_data.genres,
+      "genres": ((venue_data.genres).strip()).split(' '),
       "address": venue_data.address,
       "city": venue_data.city,
       "state": venue_data.state,
@@ -227,7 +226,6 @@ def show_venue(venue_id):
       "past_shows_count": len(past_shows_array),
       "upcoming_shows_count": len(upcoming_shows_array),
     }
-    print(venue)
     data = list(filter(lambda d: d['id'] == venue_id, [venue]))[0]
   except Exception as e:
     db.session.rollback()
@@ -253,12 +251,16 @@ def create_venue_submission():
   # --------------------------------------------------
   try:
     error = False
+    genres = ''
+    for element in request.form.getlist('genres') :
+      genres += element+' '
+
     new_venue = Venue(name=request.form.get('name'),
                       city=request.form.get('city'),
                       state=request.form.get('state'),
                       address=request.form.get('address'),
                       phone=request.form.get('phone'),
-                      genres=request.form.get('genres'),
+                      genres=genres,
                       facebook_link=request.form.get('facebook_link'),
                       image_link=request.form.get('image_link')
                       )
@@ -382,7 +384,7 @@ def show_artist(artist_id):
     artist={
       "id": artist_data.id,
       "name":artist_data.name,
-      "genres": artist_data.genres,
+      "genres": ((artist_data.genres).strip()).split(' '),
       "city": artist_data.city,
       "state": artist_data.state,
       "phone":artist_data.phone,
@@ -409,6 +411,7 @@ def show_artist(artist_id):
 def edit_artist(artist_id):
   form = ArtistForm()
   artist_data = db.session.query(Artist).get(artist_id)
+  
   artist={
     "id": artist_data.id,
     "name": artist_data.name,
@@ -430,9 +433,13 @@ def edit_artist_submission(artist_id):
   # TODO: take values from the form submitted, and update existing
   # artist record with ID <artist_id> using the new attributes
   try:
+    genres = ''
+    for element in request.form.getlist('genres') :
+      genres += element+' '
+
     artist = db.session.query(Artist).get(artist_id)
     artist.name=request.form.get('name')
-    artist.genres= request.form.get('genres')
+    artist.genres= genres
     artist.city= request.form.get('city')
     artist.state= request.form.get('state')
     artist.phone=request.form.get('phone')
@@ -473,14 +480,17 @@ def edit_venue_submission(venue_id):
   # TODO: take values from the form submitted, and update existing
   # venue record with ID <venue_id> using the new attributes
   try:
+    genres = ''
+    for element in request.form.getlist('genres') :
+      genres += element+' '
     venue = db.session.query(Venue).get(venue_id)
-    venue.name=request.form.get('name'),
-    venue.genres= request.form.get('genres'),
-    venue.address= request.form.get('address'),
-    venue.city= request.form.get('city'),
-    venue.state= request.form.get('state'),
-    venue.phone=request.form.get('phone'),
-    venue.facebook_link= request.form.get('facebook_link'),
+    venue.name=request.form.get('name')
+    venue.genres= genres
+    venue.address= request.form.get('address')
+    venue.city= request.form.get('city')
+    venue.state= request.form.get('state')
+    venue.phone=request.form.get('phone')
+    venue.facebook_link= request.form.get('facebook_link')
     venue.image_link= request.form.get('image_link')
     db.session.add(venue)
     db.session.commit()
@@ -508,11 +518,15 @@ def create_artist_submission():
   # --------------------------------------------------
   try:
     error = False
+    genres = ''
+    for element in request.form.getlist('genres') :
+      genres += element+' '
+
     new_artist = Artist(name=request.form.get('name'),
                       city=request.form.get('city'),
                       state=request.form.get('state'),
                       phone=request.form.get('phone'),
-                      genres=request.form.get('genres'),
+                      genres=genres,
                       facebook_link=request.form.get('facebook_link'),
                       image_link=request.form.get('image_link')
                       )
