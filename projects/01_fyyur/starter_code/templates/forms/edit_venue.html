@@ -15,7 +15,6 @@
               {{ form.city(class_ = 'form-control', placeholder='City', autofocus = true, value=venue.city) }}
             </div>
             <div class="form-group">
-              {{ form.state.data=[3] }}
               {{ form.state(class_ = 'form-control', placeholder='State', autofocus = true, value=venue.state) }}
             </div>
           </div>
@@ -39,7 +38,7 @@
         </div>
         <div class="form-group">
           <label for="image_link">Image Link</label>
-              <input type="text" id='image_link' class='form-control' name='image_link' placeholder="http://">
+              <input type="text" id='image_link' class='form-control' name='image_link' placeholder="http://" value="{{venue.image_link}}">
         </div>
       <input type="submit" value="Edit Venue" class="btn btn-primary btn-lg btn-block">
     </form>
