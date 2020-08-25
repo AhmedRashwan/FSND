@@ -9,16 +9,16 @@ DEBUG = True
 # Connect to the database
 
 
-# TODO IMPLEMENT DATABASE URL
+
 # ---------------------------------------
 # @DONE add a connection parameters
 # ---------------------------------------
-dialect = 'postgres'
-db_name = 'fyyur'
-db_username = 'postgres'
-db_password = 'password'
-port = 5432
-host = 'localhost'
+DIALECT = 'postgres'
+DBNAME = 'fyyur'
+DB_USER = 'postgres'
+DB_PASSWORD = 'password'
+PORT = 5432
+HOST = 'localhost'
 
-SQLALCHEMY_DATABASE_URI = f'{dialect}://{db_username}:{db_password}@{host}/{db_name}'
+SQLALCHEMY_DATABASE_URI = f'{DIALECT}://{DB_USER}:{DB_PASSWORD}@{HOST}:{PORT}/{DBNAME}'
 SQLALCHEMY_TRACK_MODIFICATIONS = False
