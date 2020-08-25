@@ -158,6 +158,7 @@ def search_venues():
   # seach for Hop should return "The Musical Hop".
   # search for "Music" should return "The Musical Hop" and "Park Square Live Music & Coffee"
   try:
+    error = False
     venue_count = db.session.query(Venue).filter(Venue.name.ilike('%'+request.form.get('search_term', '')+'%')).count()
     data=[]
     for u in db.session.query(Venue).filter(Venue.name.ilike('%'+request.form.get('search_term', '')+'%')).all():
@@ -172,21 +173,27 @@ def search_venues():
     }
   except:
     db.session.rollback()
+    error = True
   finally:
     db.session.close()
-    return render_template('pages/search_venues.html', results=response, search_term=request.form.get('search_term', ''))
+    if(error):
+      flash('Sorry!! Venue ' + request.form.get('search_term') + ' could not be found.')
+      return render_template('pages/home.html')
+    else:
+      return render_template('pages/search_venues.html', results=response, search_term=request.form.get('search_term', ''))
 
 @app.route('/venues/<int:venue_id>')
 def show_venue(venue_id):
   # shows the venue page with the given venue_id
   # TODO: replace with real venue data from the venues table, using venue_id
   try:
+    # -----------------------------------------------
+    # @DONE prepare Past Shows and upcoming Shows
+    # -----------------------------------------------
     past_shows_array = []
     upcoming_shows_array = []
-    venue_data = db.session.query(Venue).get(venue_id)
     past_shows_query = db.session.query(Show,Venue,Artist).join(Venue,Artist).filter(Venue.id==venue_id,Show.show_time<=datetime.now()).all() 
     upcoming_shows_query = db.session.query(Show,Venue,Artist).join(Venue,Artist).filter(Venue.id==venue_id,Show.show_time>=datetime.now()).all()
-
     for p in past_shows_query:
       show    = p[0]
       venue   = p[1]
@@ -208,6 +215,10 @@ def show_venue(venue_id):
         "start_time": datetime.strftime(show.show_time,'%Y-%m-%d %H:%M:%S')
       })
 
+    # -----------------------
+    # @DONE Handle the Venue
+    # -----------------------
+    venue_data = db.session.query(Venue).get(venue_id)
     venue={
       "id": venue_data.id,
       "name":venue_data.name,
@@ -251,6 +262,9 @@ def create_venue_submission():
   # --------------------------------------------------
   try:
     error = False
+    # --------------------------------------
+    # @DONE Handle genres as space separated
+    # -------------------------------------
     genres = ''
     for element in request.form.getlist('genres') :
       genres += element+' '
@@ -293,10 +307,15 @@ def delete_venue(venue_id):
   # SQLAlchemy ORM to delete a record. Handle cases where the session commit could fail.
   try:
     error = False
+    # ------------------------------------------------
+    # @DONE Remove all show related to this venue
+    # recuresivly before deleting the Venue
+    # ------------------------------------------------
     venue = Venue.query.get(venue_id)
     shows = Show.query.filter_by(venue_id=venue_id).all() 
     for s in shows: 
       db.session.delete(s)
+
     db.session.delete(venue)  
     db.session.commit()
   except Exception as e:
@@ -304,6 +323,9 @@ def delete_venue(venue_id):
     db.session.rollback()
     error = True
   finally:
+    # ------------------------------------------------
+    # @DONE return aknowledge to the front End 
+    # ------------------------------------------------
     return jsonify({'success':not error})
   # BONUS CHALLENGE: Implement a button to delete a Venue on a Venue Page, have it so that
   # clicking that button delete it from the db then redirect the user to the homepage
@@ -332,13 +354,13 @@ def search_artists():
   # seach for "A" should return "Guns N Petals", "Matt Quevado", and "The Wild Sax Band".
   # search for "band" should return "The Wild Sax Band".
   try:
+    error = False
     data = []
     result_count = db.session.query(Artist).filter(Artist.name.ilike('%'+request.form.get('search_term', '')+'%')).count()
     for artist in db.session.query(Artist).filter(Artist.name.ilike('%'+request.form.get('search_term', '')+'%')).all():
       data.append({
           "id": artist.id,
           "name": artist.name,
-          "num_upcoming_shows": 0,
       })
     response={
     "count":result_count,
@@ -346,9 +368,15 @@ def search_artists():
     }
   except:
     db.session.rollback()
+    error = True
   finally:
     db.session.close()
-    return render_template('pages/search_artists.html', results=response, search_term=request.form.get('search_term', ''))
+    if(error):
+      flash('Sorry!! Aritst ' + request.form.get('search_term') + ' could not be found.')
+      return render_template('pages/home.html')
+    else:
+      return render_template('pages/search_artists.html', results=response, search_term=request.form.get('search_term', ''))
+
 
 @app.route('/artists/<int:artist_id>')
 def show_artist(artist_id):
@@ -597,20 +625,25 @@ def create_show_submission():
   # called to create new shows in the db, upon submitting new show listing form
   # TODO: insert form data as a new Show record in the db, instead
   try:
-    error = False
-    show = Show(
-      artist_id=request.form.get('artist_id'),
-      venue_id=request.form.get('venue_id'),
-      show_time=request.form.get('start_time'),
-      )
-    print(show.show_time)
-
-    db.session.add(show)
-    db.session.commit()
-    error=False
-  except expression as e:
+    error = True
+    # -----------------------------------------------
+    # @DONE Check first if venue and Artist is exist
+    # -----------------------------------------------
+    venue = db.session.query(Venue).get(request.form.get('venue_id'))
+    artist = db.session.query(Artist).get(request.form.get('artist_id'))
+    if venue is None or artist is None:
+      error = True
+    else:
+      show = Show(
+        artist_id=request.form.get('artist_id'),
+        venue_id=request.form.get('venue_id'),
+        show_time=request.form.get('start_time'),
+        )
+      db.session.add(show)
+      db.session.commit()
+      error=False
+  except Exception as e:
     db.session.rollback()
-    print(e)
     error = True
   finally:
     db.session.close()  
@@ -618,7 +651,7 @@ def create_show_submission():
       flash('An error occurred. Show could not be listed.')
     else:
       flash('Show was successfully listed!')
-      return render_template('pages/home.html')
+    return render_template('pages/home.html')
   # on successful db insert, flash success
   # TODO: on unsuccessful db insert, flash an error instead.
   # e.g., flash('An error occurred. Show could not be listed.')
