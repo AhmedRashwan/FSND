@@ -6,6 +6,7 @@ import json
 import dateutil.parser
 import babel
 import datetime
+import sys
 from flask import (Flask,
                     render_template,
                     request,
@@ -77,7 +78,8 @@ def venues():
               'state': elem.state,
               'venues': venues
             })
-    except:
+    except Exception as e:
+        print(sys.exc_info())
         db.session.rollback()
     finally:
         db.session.close()
@@ -101,7 +103,8 @@ def search_venues():
           "count": venue_count,
           "data": data
         }
-    except:
+    except Exception as e:
+        print(sys.exc_info())
         db.session.rollback()
         error = True
     finally:
@@ -167,8 +170,8 @@ def show_venue(venue_id):
         }
         data = list(filter(lambda d: d['id'] == venue_id, [venue]))[0]
     except Exception as e:
+        print(sys.exc_info())
         db.session.rollback()
-        print(e)
     finally:
         return render_template('pages/show_venue.html', venue=data)
 
@@ -206,7 +209,7 @@ def create_venue_submission():
         db.session.add(new_venue)
         db.session.commit()
     except Exception as e:
-        print(e)
+        print(sys.exc_info())
         db.session.rollback()
         error = True
     finally:
@@ -237,7 +240,7 @@ def delete_venue(venue_id):
         db.session.delete(venue)  
         db.session.commit()
     except Exception as e:
-        print(e)
+        print(sys.exc_info())
         db.session.rollback()
         error = True
     finally:
@@ -259,7 +262,8 @@ def artists():
               'id': artist.id,
               'name': artist.name
             })     
-    except:
+    except Exception as e:
+        print(sys.exc_info())  
         db.session.rollback()
     finally:
         db.session.close()
@@ -281,7 +285,8 @@ def search_artists():
         "count":result_count,
         "data": data
         }
-    except:
+    except Exception as e:
+        print(sys.exc_info())
         db.session.rollback()
         error = True
     finally:
@@ -341,6 +346,7 @@ def show_artist(artist_id):
         }
         data = list(filter(lambda d: d['id'] == artist_id, [artist]))[0]
     except Exception as e:
+        print(sys.exc_info())
         db.session.rollback()
     finally:
         db.session.close()
@@ -387,7 +393,7 @@ def edit_artist_submission(artist_id):
         db.session.add(artist)
         db.session.commit()
     except Exception as e:
-        print(e)
+        print(sys.exc_info())
         db.session.rollback()
     finally:
         db.session.close()  
@@ -430,7 +436,8 @@ def edit_venue_submission(venue_id):
         venue.image_link= request.form.get('image_link')
         db.session.add(venue)
         db.session.commit()
-    except:
+    except Exception as e:
+        print(sys.exc_info())
         db.session.rollback()
     finally:
         db.session.close()  
@@ -465,7 +472,8 @@ def create_artist_submission():
                           )
         db.session.add(new_artist)
         db.session.commit()
-    except:
+    except Exception as e:
+        print(sys.exc_info())
         db.session.rollback()
         error = True
     finally:
@@ -501,8 +509,8 @@ def shows():
             "start_time": datetime.strftime(show.show_time,'%Y-%m-%d %H:%M:%S')
           })
     except Exception as e:
+        print(sys.exc_info())
         db.session.rollback()
-        print(e)
     finally:
         db.session.close()
         return render_template('pages/shows.html', shows=data)
@@ -537,6 +545,7 @@ def create_show_submission():
             db.session.commit()
             error=False
     except Exception as e:
+        print(sys.exc_info())
         db.session.rollback()
         error = True
     finally:
