@@ -14,7 +14,7 @@ DEBUG = True
 # @DONE add a connection parameters
 # ---------------------------------------
 DIALECT = 'postgres'
-DBNAME = 'fyyur'
+DBNAME = 'fyyurTest4'
 DB_USER = 'postgres'
 DB_PASSWORD = 'password'
 PORT = 5432

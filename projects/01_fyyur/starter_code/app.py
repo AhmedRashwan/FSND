@@ -7,8 +7,7 @@ import dateutil.parser
 import babel
 import datetime
 import sys
-from flask import (Flask,
-                    render_template,
+from flask import (render_template,
                     request,
                     Response,
                     flash,
@@ -21,13 +20,11 @@ from logging import (Formatter, FileHandler)
 from flask_wtf import Form
 from forms import *
 from sqlalchemy import (or_, and_)
+from models import (db, app, Venue, Artist, Show)
 #----------------------------------------------------------------------------#
 # App Config.
 #----------------------------------------------------------------------------#
-app = Flask(__name__)
-moment = Moment(app)
-app.config.from_object('config')
-from models import (db, Show, Venue, Artist)
+
 
 
 
