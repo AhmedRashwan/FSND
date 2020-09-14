@@ -31,7 +31,7 @@ def create_app(test_config=None):
         return jsonify({
           "categories": [category.type for category in categories]
         }),200
-      except : 
+      except Exception as ex: 
         db.session.close()
         abort(422)
 
@@ -48,10 +48,10 @@ def create_app(test_config=None):
   Clicking on the page numbers should update the questions. 
   '''
   
+  # handle GET requests for questions
   @app.route('/questions')
   def getQuestions():
       categoryList = []
-
       # Pagination
       page_num = request.args.get('page',1,type=int)
       start = (page_num - 1) * QUESTIONS_PER_PAGE
@@ -66,7 +66,6 @@ def create_app(test_config=None):
       for category in category_ids :
         category_data = db.session.query(Category).get(category.category)
         categoryList.append(category_data.type)
-
       return jsonify({
         'questions':questions[start:end],
         'total_questions': len(questions),
@@ -79,7 +78,7 @@ def create_app(test_config=None):
   TEST: When you click the trash icon next to a question, the question will be removed.
   This removal will persist in the database and when you refresh the page. 
   '''
-  
+  # DELETE question using a question ID
   @app.route("/questions/<int:question_id>",methods=['DELETE'])
   def delete_question(question_id):
       # print(request)
@@ -109,23 +108,25 @@ def create_app(test_config=None):
   of the questions list in the "List" tab.  
   '''
 
+  # POST a new question
   @app.route("/questions",methods=["POST"])
   def create_question():
     try:
       request_data = request.get_json()
-      question = request_data.get('question',None)
-      answer = request_data.get('answer',None)
-      category = request_data.get('category',None)
-      difficulty = request_data.get('difficulty',None)
-      question = Question(question=question,
-                  answer=answer,
-                  category=category, 
-                  difficulty=difficulty)
-      question.insert()
-      return jsonify(
-              {"succes":True,
-              'message':'Question added Successfully'
-              }),201
+      question = request_data.get('question')
+      answer = request_data.get('answer')
+      category = request_data.get('category')
+      difficulty = request_data.get('difficulty')
+      if question or answer or category or difficulty is not None:
+          question = Question(question=question,
+                      answer=answer,
+                      category=category, 
+                      difficulty=difficulty)
+          question.insert()
+          return jsonify(
+                  {"succes":True,
+                  'message':'Question added Successfully'
+                  }),201
     except Exception as ex:
       print(ex)
       db.session.close()
@@ -136,11 +137,31 @@ def create_app(test_config=None):
   It should return any questions for whom the search term 
   is a substring of the question. 
 
+  
   TEST: Search by any phrase. The questions list will update to include 
   only question that include that string within their question. 
   Try using the word "title" to start. 
   '''
 
+  @app.route('/questions/search',methods=['POST'])
+  def search_questions():
+    categoryList = []
+    request_data = request.get_json()
+    search_term = request_data.get('searchTerm')
+    questions = db.session.query(Question).filter(Question.question.ilike('%'+ search_term +'%')).all()
+
+    # Categories relates to returned questions
+
+    for category in questions :
+      category_data = db.session.query(Category).get(category.category)
+      if category_data.type not in categoryList:
+          categoryList.append(category_data.type)
+    print(categoryList)
+    return jsonify({
+          'questions':[question.format() for question in questions],
+          'totalQuestions':len(questions),
+          'categories':categoryList
+          })
   '''
   @TODO: 
   Create a GET endpoint to get questions based on category. 
@@ -149,8 +170,19 @@ def create_app(test_config=None):
   categories in the left column will cause only questions of that 
   category to be shown. 
   '''
-
-
+  @app.route("/categories/<int:category_id>/questions")
+  def get_category_questions(category_id):
+    try:
+        questions = db.session.query(Question).filter(Question.category==category_id).all()
+        if questions is None : 
+            abort(404)
+        else:
+            return jsonify({
+              'questions' : [question.format() for question in questions]
+            })
+    except Exception as ex:
+      db.session.close()
+      abort(400)
   '''
   @TODO: 
   Create a POST endpoint to get questions to play the quiz. 
@@ -164,7 +196,7 @@ def create_app(test_config=None):
   '''
 
   '''
-  @TODO: 
+  @TODO: DONE
   Create error handlers for all expected errors 
   including 404 and 422. 
   '''
