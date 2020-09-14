@@ -1,10 +1,11 @@
 import os
 from flask import Flask, request, abort, jsonify
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import and_
 from flask_cors import CORS
 import random
 from models import setup_db, Question, Category,db
-
+import sys
 QUESTIONS_PER_PAGE = 10
 
 def create_app(test_config=None):
@@ -27,9 +28,13 @@ def create_app(test_config=None):
   @app.route('/categories')
   def getCategories():
       try:
-        categories = db.session.query(Category).all()
+        categories={}
+        query = db.session.query(Category).all()
+        for category in query:
+          categories[category.id] = category.type
+          
         return jsonify({
-          "categories": [category.type for category in categories]
+          "categories": categories
         }),200
       except Exception as ex: 
         db.session.close()
@@ -51,7 +56,7 @@ def create_app(test_config=None):
   # handle GET requests for questions
   @app.route('/questions')
   def getQuestions():
-      categoryList = []
+      categories = {}
       # Pagination
       page_num = request.args.get('page',1,type=int)
       start = (page_num - 1) * QUESTIONS_PER_PAGE
@@ -65,11 +70,11 @@ def create_app(test_config=None):
       category_ids = db.session.query(Question).distinct(Question.category).all()
       for category in category_ids :
         category_data = db.session.query(Category).get(category.category)
-        categoryList.append(category_data.type)
+        categories[category_data.id]= category_data.type
       return jsonify({
         'questions':questions[start:end],
         'total_questions': len(questions),
-        'categories':categoryList,
+        'categories':categories,
       })
   '''
   @TODO: DONE
@@ -145,22 +150,21 @@ def create_app(test_config=None):
 
   @app.route('/questions/search',methods=['POST'])
   def search_questions():
-    categoryList = []
+    categories = {}
     request_data = request.get_json()
     search_term = request_data.get('searchTerm')
     questions = db.session.query(Question).filter(Question.question.ilike('%'+ search_term +'%')).all()
 
     # Categories relates to returned questions
-
     for category in questions :
       category_data = db.session.query(Category).get(category.category)
-      if category_data.type not in categoryList:
-          categoryList.append(category_data.type)
-    print(categoryList)
+      if category_data.type not in categories:
+          categories[category_data.id] = category_data.type
+
     return jsonify({
           'questions':[question.format() for question in questions],
           'totalQuestions':len(questions),
-          'categories':categoryList
+          'categories':categories
           })
   '''
   @TODO: 
@@ -190,11 +194,34 @@ def create_app(test_config=None):
   and return a random questions within the given category, 
   if provided, and that is not one of the previous questions. 
 
+
   TEST: In the "Play" tab, after a user selects "All" or a category,
   one question at a time is displayed, the user is allowed to answer
   and shown whether they were correct or not. 
   '''
+  @app.route("/quizzes",methods=['POST'])
+  def letus_play():
+    try:
+        request_data = request.get_json()
+        quiz_category = request_data.get('quiz_category')
+        previous_questions = request_data.get('previous_questions')
+        if quiz_category['id'] == 0:
+          question = db.session.query(Question).filter(~Question.id.in_(previous_questions)).first()
+        else:
+          question = db.session.query(Question).filter(and_(Question.category==quiz_category['id'],~Question.id.in_(previous_questions))).first()
 
+        if question is None:
+            question = False
+        else:
+            question = question.format()
+
+        return jsonify({
+              'question': question
+        })
+    except Exception as ex:
+        print(sys.exc_info())
+        abort(422)
+    
   '''
   @TODO: DONE
   Create error handlers for all expected errors 
