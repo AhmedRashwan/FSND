@@ -57,41 +57,188 @@ Setting the `FLASK_ENV` variable to `development` will detect file changes and r
 
 Setting the `FLASK_APP` variable to `flaskr` directs flask to use the `flaskr` directory and the `__init__.py` file to find the application. 
 
-## Tasks
+# API Reference
+## Getting started
+- BaseURLs :- this app working locally now, so you can test run it on you local machine <br>
+1- Frontend-url :- this url to test the react app view http://127.0.0.1:3000 <br>
+2- Backend-url : this url to test the flask app http://127.0.0.1:5000
 
-One note before you delve into your tasks: for each endpoint you are expected to define the endpoint and response data. The frontend will be a plentiful resource because it is set up to expect certain endpoints and response data formats already. You should feel free to specify endpoints in your own way; if you do so, make sure to update the frontend or you will get some unexpected behavior. 
-
-1. Use Flask-CORS to enable cross-domain requests and set response headers. 
-2. Create an endpoint to handle GET requests for questions, including pagination (every 10 questions). This endpoint should return a list of questions, number of total questions, current category, categories. 
-3. Create an endpoint to handle GET requests for all available categories. 
-4. Create an endpoint to DELETE question using a question ID. 
-5. Create an endpoint to POST a new question, which will require the question and answer text, category, and difficulty score. 
-6. Create a POST endpoint to get questions based on category. 
-7. Create a POST endpoint to get questions based on a search term. It should return any questions for whom the search term is a substring of the question. 
-8. Create a POST endpoint to get questions to play the quiz. This endpoint should take category and previous question parameters and return a random questions within the given category, if provided, and that is not one of the previous questions. 
-9. Create error handlers for all expected errors including 400, 404, 422 and 500. 
-
-REVIEW_COMMENT
+## Error Handling
+- Errors returned as a json object contains the error code and the message as the following:
 ```
-This README is missing documentation of your endpoints. Below is an example for your endpoint to get all categories. Please use it as a reference for creating your documentation and resubmit your code. 
+{
+  "error": 404,
+  "message": "not found",
+  "success": false
+}
+```
+the types of errors handled by API: <br> 
+400: Bad Request<br>
+404 : Not Found<br>
+405: Method Not Allowed<br>
+422: Unproccessable<br>
+500: Internal Server Error<br>
 
-Endpoints
-GET '/categories'
-GET ...
-POST ...
-DELETE ...
+## End points
 
-GET '/categories'
-- Fetches a dictionary of categories in which the keys are the ids and the value is the corresponding string of the category
-- Request Arguments: None
-- Returns: An object with a single key, categories, that contains a object of id: category_string key:value pairs. 
-{'1' : "Science",
-'2' : "Art",
-'3' : "Geography",
-'4' : "History",
-'5' : "Entertainment",
-'6' : "Sports"}
+### Categories :
 
+GET  '/categories'
+
+- General : <br>
+1- Fetch all distinct categories that related to qusetions <br>
+2- Request Arguments: None <br>
+3- Returns: An object that contains the type and the id in key:value pairs format. 
+- sample ```curl http://127.0.0.1:5000/categories```
+```
+  "categories": {
+    "1": "Science",
+    "2": "Art",
+    "3": "Geography",
+    "4": "History",
+    "5": "Entertainment",
+    "6": "Sports"
+  }
+```
+
+GET '/categories/<int:category_id>/questions'
+- General : <br>
+1- Fetch all questions related to specified category <br>
+2- Request Arguments: category id <br>
+3- Returns: An object that contains list of questions in key:value pairs format. 
+- sample ```curl http://127.0.0.1:5000/categories/1/questions```
+
+```
+"questions": [
+    {
+      "answer": "The Liver",
+      "category": 1,
+      "difficulty": 4,
+      "id": 20,
+      "question": "What is the heaviest organ in the human body?"
+    },
+    {
+      "answer": "Alexander Fleming",
+      "category": 1,
+      "difficulty": 3,
+      "id": 21,
+      "question": "Who discovered penicillin?"
+    }],
+  "success": true
+```
+
+### Questions :
+ all the end points related to questions :
+
+GET '/questions'
+- General : <br>
+1- Fetch all questions<br>
+2- Request Arguments: (optional) page id <br>
+3- Returns: An object that contains list of the questions,total_questions,categories in key:value format. 
+- sample ```curl http://127.0.0.1:5000/questions```
+```
+{
+  "categories": {
+    "1": "Science",
+    "2": "Art",
+    "3": "Geography",
+    "4": "History",
+    "5": "Entertainment",
+    "6": "Sports"
+  },
+  "questions": [
+    {
+      "answer": "Apollo 13",
+      "category": 5,
+      "difficulty": 4,
+      "id": 2,
+      "question": "What movie earned Tom Hanks his third straight Oscar nomination, in 1996?"
+    },
+    {
+      "answer": "Edward Scissorhands",
+      "category": 5,
+      "difficulty": 3,
+      "id": 6,
+      "question": "What was the title of the 1990 fantasy directed by Tim Burton about a young man with multi-bladed appendages?"
+    }],
+    "total_questions": 38 
+}
+```
+POST '/questions'
+- General : <br>
+1- the end point used for Add new question<br>
+2- Request Arguments: question, answer, category, difficulty <br>
+3- Returns: An object that contain a success message 
+- sample ```curl -X POST http://127.0.0.1:5000/questions -H 'Content-type:application/json' -d '{"question": "Is a test questions?","answer": "yes, it is ","difficulty": "3","category": "2"}' ```
+
+```
+{
+    "message": "Question added Successfully",
+    "success": true
+}
+```
+
+POST '/questions/search'
+- General : <br>
+1- the end point used for search for a specified questions by search_term<br>
+2- Request Arguments: searchTerm <br>
+3- Returns: An object that contain list of questions, categories that related to the search term 
+- sample ```curl -X POST http://127.0.0.1:5000/questions/search -H 'Content-type:application/json' -d '{"searchTerm": "world cup"}' ```
+
+```
+{
+    "categories": {
+        "6": "Sports"
+    },
+    "questions": [
+        {
+            "answer": "Brazil",
+            "category": 6,
+            "difficulty": 3,
+            "id": 10,
+            "question": "Which is the only team to play in every soccer World Cup tournament?"
+        },
+        {
+            "answer": "Uruguay",
+            "category": 6,
+            "difficulty": 4,
+            "id": 11,
+            "question": "Which country won the first ever soccer World Cup in 1930?"
+        }
+    ],
+    "totalQuestions": 2
+}
+```
+DELETE '/questions/<int:question_id>'
+- General : <br>
+1- the end point used for Delete a question with a given id<br>
+2- Request Arguments: quesion id <br>
+3- Returns: An object that contain success message for deleteing
+- sample ```curl -X DELETE http://127.0.0.1:5000/questions/1 ```
+
+```
+{
+  "message": "Order Deleted Successfully",
+  "succes": true
+}
+```
+### Quizzes :
+- General : <br>
+1- the end point used for get a random questions in the selected category and keep track with the asked question to ignore it in the next questions<br>
+2- Request Arguments: category_id, category type, list of the previous asked questions to keep track with<br>
+3- Returns: An object that contain a new questions in the given category and the list of the previous asked questions
+- sample ```curl -X POST http://127.0.0.1:5000/quizzes -H 'Content-type:application/json' -d '{"previous_questions":[],"quiz_category":{"type":"Geography","id":"3"}}' ```
+```
+{
+    "question": {
+        "answer": "Lake Victoria",
+        "category": 3,
+        "difficulty": 2,
+        "id": 13,
+        "question": "What is the largest lake in Africa?"
+    },
+    "success": true
+}
 ```
 
 
