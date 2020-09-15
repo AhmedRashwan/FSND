@@ -46,6 +46,13 @@ class TriviaTestCase(unittest.TestCase):
         data = json.loads(res.data)
         self.assertTrue(data['categories'])
 
+    def test_405_get_categories(self):
+        res = self.client().post("/categories")
+        data = json.loads(res.data)
+        self.assertEqual(res.status_code, 405)
+        self.assertEqual(data['success'], False)
+        self.assertEqual(data['message'], 'method not allowed')
+
     def test_get_paginated_questions(self):
         res = self.client().get('/questions')
         data = json.loads(res.data)
@@ -141,6 +148,22 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data['success'], False)
         self.assertEqual(data['message'], 'unproccessable')
 
+    def test_search_for_questions(self):
+        res = self.client().post('/questions/search', json={"searchTerm":"Cup"})
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertTrue(data['questions'])
+        self.assertTrue(data['totalQuestions'])
+        self.assertTrue(data['categories'])
+
+    def test_404_search_for_questions(self):
+        res = self.client().post('/questions/search', json={"searchTerm":"NO_TERM_FOUND"})
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 404)
+        self.assertEqual(data['success'], False)
+        self.assertEqual(data['message'], 'not found')
 
 # Make the tests conveniently executable
 if __name__ == "__main__":

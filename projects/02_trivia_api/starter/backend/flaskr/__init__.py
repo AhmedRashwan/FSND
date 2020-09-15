@@ -25,7 +25,7 @@ def create_app(test_config=None):
     # -------------------------------
     @app.route('/categories')
     def getCategories():
-        try:
+        if request.method == 'GET':
             categories = {}
             query = db.session.query(Category).all()
             for category in query:
@@ -34,9 +34,8 @@ def create_app(test_config=None):
             return jsonify({
               "categories": categories
             }), 200
-        except Exception:
-            db.session.close()
-            abort(422)
+        else:
+            abort(405)
 
     # ---------------------------------
     # handle GET request for questions
@@ -119,6 +118,8 @@ def create_app(test_config=None):
         search_term = request_data.get('searchTerm')
         questions = db.session.query(Question).filter(Question.question.ilike('%' + search_term + '%')).all()
 
+        if not questions:
+            abort(404)
         # Categories relates to returned questions
         for category in questions:
             category_data = db.session.query(Category).get(category.category)
