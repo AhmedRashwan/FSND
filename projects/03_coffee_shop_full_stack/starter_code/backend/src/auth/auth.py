@@ -1,5 +1,5 @@
 import json
-from flask import request, _request_ctx_stack
+from flask import request, _request_ctx_stack, abort
 from functools import wraps
 from jose import jwt
 from urllib.request import urlopen
@@ -67,16 +67,19 @@ def check_permissions(permission, payload):
         raise AuthError({
             'code': 'unauthorized',
             'description': 'Permission not found.'
-        }, 403)
+        }, 403)    
     return True
 
 # --------------------------------
 # Verify and Decode the JWT Token
 # --------------------------------
+## Auth Header
 def verify_decode_jwt(token):
+
     jsonurl = urlopen(f'https://{AUTH0_DOMAIN}/.well-known/jwks.json')
     jwks = json.loads(jsonurl.read())
     unverified_header = jwt.get_unverified_header(token)
+    
     rsa_key = {}
     if 'kid' not in unverified_header:
         raise AuthError({
@@ -93,6 +96,7 @@ def verify_decode_jwt(token):
                 'n': key['n'],
                 'e': key['e']
             }
+    
     if rsa_key:
         try:
             payload = jwt.decode(
@@ -102,7 +106,6 @@ def verify_decode_jwt(token):
                 audience=API_AUDIENCE,
                 issuer='https://' + AUTH0_DOMAIN + '/'
             )
-
             return payload
 
         except jwt.ExpiredSignatureError:
@@ -110,6 +113,7 @@ def verify_decode_jwt(token):
                 'code': 'token_expired',
                 'description': 'Token expired.'
             }, 401)
+
         except jwt.JWTClaimsError:
             raise AuthError({
                 'code': 'invalid_claims',
@@ -125,7 +129,6 @@ def verify_decode_jwt(token):
                 'description': 'Unable to find the appropriate key.'
             }, 400)
 
-
 # --------------------------------------
 # Add decorator to check the permission
 # -------------------------------------
@@ -133,10 +136,14 @@ def requires_auth(permission=''):
     def requires_auth_decorator(f):
         @wraps(f)
         def wrapper(*args, **kwargs):
-            token = get_token_auth_header()
-            payload = verify_decode_jwt(token)
-            check_permissions(permission, payload)
-            return f(payload, *args, **kwargs)
+            try:
+                token = get_token_auth_header()
+                payload = verify_decode_jwt(token)
+                check_permissions(permission, payload)
+                return f(*args, **kwargs)
+            except Exception as ex:
+                print(ex)
+                abort(401)
 
         return wrapper
     return requires_auth_decorator
