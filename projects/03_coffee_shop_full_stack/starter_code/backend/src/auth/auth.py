@@ -9,11 +9,10 @@ AUTH0_DOMAIN = 'arashwan.us.auth0.com'
 ALGORITHMS = ['RS256']
 API_AUDIENCE = 'http://127.0.0.1:5000'
 
-## AuthError Exception
-'''
-AuthError Exception
-A standardized way to communicate auth failure modes
-'''
+
+# -------------------
+# AuthError Exception
+# -------------------
 class AuthError(Exception):
     def __init__(self, error, status_code):
         self.error = error
@@ -22,7 +21,7 @@ class AuthError(Exception):
 
 # -------------------
 # Auth Header
-#--------------------
+# --------------------
 def get_token_auth_header():
     auth = request.headers.get('Authorization', None)
     if not auth:
@@ -53,9 +52,10 @@ def get_token_auth_header():
     token = parts[1]
     return token
 
+
 # ---------------------------------------
 # Check if the Permissions in the payload
-#----------------------------------------
+# ----------------------------------------
 def check_permissions(permission, payload):
     if 'permissions' not in payload:
         raise AuthError({
@@ -67,19 +67,19 @@ def check_permissions(permission, payload):
         raise AuthError({
             'code': 'unauthorized',
             'description': 'Permission not found.'
-        }, 403)    
+        }, 403)
     return True
+
 
 # --------------------------------
 # Verify and Decode the JWT Token
 # --------------------------------
-## Auth Header
 def verify_decode_jwt(token):
 
     jsonurl = urlopen(f'https://{AUTH0_DOMAIN}/.well-known/jwks.json')
     jwks = json.loads(jsonurl.read())
     unverified_header = jwt.get_unverified_header(token)
-    
+
     rsa_key = {}
     if 'kid' not in unverified_header:
         raise AuthError({
@@ -96,7 +96,7 @@ def verify_decode_jwt(token):
                 'n': key['n'],
                 'e': key['e']
             }
-    
+
     if rsa_key:
         try:
             payload = jwt.decode(
@@ -127,7 +127,8 @@ def verify_decode_jwt(token):
     raise AuthError({
                 'code': 'invalid_header',
                 'description': 'Unable to find the appropriate key.'
-            }, 400)
+                }, 400)
+
 
 # --------------------------------------
 # Add decorator to check the permission
